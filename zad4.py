@@ -12,6 +12,8 @@ mx, my = m.position()
 while( cap.isOpened() and closeFlag != 1):
     ret, img = cap.read()
     #cv2.imshow('input', img)
+    if not ret:
+        continue
 
 
     gray = cv2.cvtColor( img, cv2.COLOR_BGR2GRAY)
@@ -20,8 +22,8 @@ while( cap.isOpened() and closeFlag != 1):
     blur3 = cv2.GaussianBlur( gray, (5,5), 0 )
     blur4 = cv2.GaussianBlur( gray, (5,5), 0 )
 
-    ret,thresh = cv2.threshold(blur,127,255,cv2.THRESH_BINARY_INV)
-    ret,thresh2 = cv2.threshold(blur,127,255,cv2.THRESH_BINARY_INV)
+    ret,thresh = cv2.threshold(blur,70,255,cv2.THRESH_BINARY_INV)
+    ret,thresh2 = cv2.threshold(blur,70,255,cv2.THRESH_BINARY_INV)
     cv2.imshow('treshold', thresh2)
 
     contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
@@ -37,7 +39,8 @@ while( cap.isOpened() and closeFlag != 1):
             if(area>max_area):
                 max_area=area
                 ci=i
-    cnt=contours[ci]
+    if ci < len(contours):
+        cnt=contours[ci]
     hull = cv2.convexHull(cnt)
 
     # wykrywanie centroidu
@@ -61,8 +64,10 @@ while( cap.isOpened() and closeFlag != 1):
 
     cv2.imshow('input', img)
     #cv2.imshow('threshold2', threshold2)
-    cv2.imshow('contours', drawing)
+    #cv2.imshow('contours', drawing)
 
-    k = cv2.waitKey(10)
-    if k == 27:
+    if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+
+cap.release()
+cv2.destroyAllWindows()
