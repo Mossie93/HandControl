@@ -1,0 +1,94 @@
+import numpy as np
+import cv2
+import time
+
+cap = cv2.VideoCapture(0)
+start_time = time.time()
+
+hand_samples = []
+sampling_finished = False
+
+czas = [0.0, 0.0, 0.0, 0.0, 0.0]
+
+skin_probabilities = {}
+
+def skin_probability(x):
+    t1 = time.clock()
+    if len(x) > 2:
+        x = (x[0], x[1])
+    t2 = time.clock()
+    delta = np.subtract(x, x_mean)
+    t3 = time.clock()
+    a = (1.0/np.sqrt(((2*np.pi)**2)*covariance_matrix_det))
+    t4 = time.clock()
+    b = pow(np.e, -1.0/2 * np.dot(np.dot(delta, covariance_matrix_inv), np.transpose(delta)))
+    t5 = time.clock()
+    result = a * b
+    t6 = time.clock()
+    globals()['czas'] = np.add(globals()['czas'], [t2-t1, t3-t2, t4-t3, t5-t4, t6-t5])
+    return result
+
+while True:
+    # Capture frame-by-frame
+    ret, frame = cap.read()
+    if not ret:
+        continue
+
+    # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    elapsed = time.time() - start_time
+
+    # Read frame size
+    height, width, depth = frame.shape
+
+    # Calculate box position
+    box_size = int(float(min(height, width)) * 0.2)
+    box_pos1 = ((width - box_size) / 2, (height - box_size) / 2)
+    box_pos2 = ((width + box_size) / 2, (height + box_size) / 2)
+
+    if elapsed < 5:
+        # Draw the sampler rectangle if elapsed time less than 5 seconds
+        cv2.rectangle(frame, box_pos1, box_pos2, (200, 50, 50))
+    elif not sampling_finished:
+        # Get color sample set from the rectangle
+        for i in range(box_pos1[0], box_pos2[0]):
+            for j in range(box_pos1[1], box_pos2[1]):
+                hue_degrees = hsv[i][j][0] 
+                # hue_radians = float(hue_degrees)*np.pi/180.0
+                saturation = hsv[i][j][1]
+                brightness = hsv[i][j][2]
+                if brightness < 60:
+                    continue
+                sample = (hue_degrees, saturation)
+                hand_samples.append(sample)
+        samples_transposed = np.transpose(hand_samples)
+        covariance_matrix = np.cov(samples_transposed)
+        x_mean = (np.mean(samples_transposed[0]), np.mean(samples_transposed[1]))
+        covariance_matrix_inv = np.linalg.inv(covariance_matrix)
+        covariance_matrix_det = np.linalg.det(covariance_matrix)
+        sampling_finished = True
+        print "Sampled %d pixels" % len(hand_samples)
+        print "Calculating probabilities"
+        for i in range(180):
+            for j in range(256):
+                skin_probabilities[(i, j)] = skin_probability((i, j))
+        print czas
+    else:
+        # After having finished the sampling... let's calculate the statistic parameters
+        t1 = time.clock()
+        for i in range(height):
+            for j in range(width):
+                pass
+                # h, s = hsv[i][j][0], hsv[i][j][1]
+                # if skin_probabilities[(h, s)] > 0.0003:
+                #     frame[i][j] = (0, 0, 255)
+        print time.clock() - t1
+
+    # Display the resulting frame
+    cv2.imshow('frame',frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+# When everything done, release the capture
+cap.release()
+cv2.destroyAllWindows()

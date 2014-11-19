@@ -1,11 +1,18 @@
 import cv2
 import numpy as np
+from pymouse import PyMouse
 
+m = PyMouse()
 closeFlag = 0
 cap = cv2.VideoCapture(0)
+startFlag = 1
+startFlag2 = 0
+mx, my = m.position()
+
 while( cap.isOpened() and closeFlag != 1):
     ret, img = cap.read()
     #cv2.imshow('input', img)
+
 
     gray = cv2.cvtColor( img, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur( gray, (5,5), 0 )
@@ -40,6 +47,9 @@ while( cap.isOpened() and closeFlag != 1):
                 cy = int(moments['m01']/moments['m00']) # cy = M01/M00
 
     centr=(cx,cy)
+
+    m.move(cx*2, cy*2)
+
     cv2.circle(img,centr,10,[0,0,255],2)
 
     drawing = np.zeros(img.shape,np.uint8)
