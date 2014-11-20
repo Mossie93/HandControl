@@ -6,6 +6,8 @@ while( cap.isOpened() ) :
     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray,(5,5),0)
     ret,thresh1 = cv2.threshold(blur,70,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
+    ret,thresh2 = cv2.threshold(blur,70,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
+
 
     contours, hierarchy = cv2.findContours(thresh1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
     drawing = np.zeros(img.shape,np.uint8)
@@ -30,6 +32,10 @@ while( cap.isOpened() ) :
     cv2.drawContours(drawing,[cnt],0,(0,255,0),2)
     cv2.drawContours(drawing,[hull],0,(0,0,255),2)
 
+    cv2.circle(thresh2,centr,10,[0,0,255],2)
+    cv2.drawContours(thresh2,[cnt],0,(0,255,0),2)
+    cv2.drawContours(thresh2,[hull],0,(0,0,255),2)
+
     cnt = cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)
     hull = cv2.convexHull(cnt,returnPoints = False)
 
@@ -49,6 +55,7 @@ while( cap.isOpened() ) :
                print(i)
                i=0
     cv2.imshow('output',drawing)
+    cv2.imshow('treshold', thresh2)
     cv2.imshow('input',img)
 
     k = cv2.waitKey(10)
